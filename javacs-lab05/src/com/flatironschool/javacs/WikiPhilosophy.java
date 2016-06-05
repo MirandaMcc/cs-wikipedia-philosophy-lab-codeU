@@ -41,15 +41,19 @@ public class WikiPhilosophy {
 		do{
 			//get first good link
 			visited.add(url);
+			System.out.println(url);
 			Document doc = Jsoup.connect(url).get();
         	Elements links = doc.select("a[href]");
+	
 			Element valid = null;
+			int i = 0;
 			for(Element e : links){
-				if(!WikiPhilosophy.parentParensOrEm(e) && WikiPhilosophy.isValidLink(e.text()))
+				if(i >=3 && WikiPhilosophy.isValidLink(e.attr("abs:href"),e.text()) && !WikiPhilosophy.parentParensOrEm(e) )
 				{
 					valid = e;
 					break;
 				}
+				i++;
 			}
 			
 			if(valid == null){
@@ -58,7 +62,7 @@ public class WikiPhilosophy {
 			}
 			
 			//update url to search new page
-			url = valid.attr("abs:href");;
+			url = valid.attr("abs:href");
 		
 			
 		} while(visited.size() < 15 && !visited.contains(target)); //caps number of links followed and stops when Philosophy reached
@@ -68,14 +72,16 @@ public class WikiPhilosophy {
         System.out.println(visited);
 	}
 	
-	public static boolean isValidLink(String link){
-
-		return !visited.contains(link);
+	public static boolean isValidLink(String link,String text){
+		System.out.println("char:" + text);
+		
+		return text.length() > 0 && !visited.contains(link); //&& text.charAt(0) >= 97; //checking for lowercase
 	}
 
 	public static boolean parentParensOrEm(Node node){
 		Element p = (Element) node.parent();
 		String tag = p.tagName();
-		return tag.equals("em"); //|| node.parent().equals(parens);
+		System.out.println("tag:" + tag);
+		return tag.equals("em") || tag.equals("b"); //|| node.parent().equals(parens);
 	}
 }
