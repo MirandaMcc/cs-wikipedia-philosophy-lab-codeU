@@ -9,11 +9,16 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
 import org.jsoup.select.Elements;
+import org.jsoup.nodes.Document;
+import org.jsoup.Jsoup;
 
 public class WikiPhilosophy {
 	
 	final static WikiFetcher wf = new WikiFetcher();
 	final static List<String> visited = new ArrayList<String>();
+	final static String target = "https://en.wikipedia.org/wiki/Philosophy";
+	final static String start = "https://en.wikipedia.org/wiki/Java_(programming_language)";
+	
 	/**
 	 * Tests a conjecture about Wikipedia and Philosophy.
 	 * 
@@ -29,33 +34,34 @@ public class WikiPhilosophy {
 	 */
 	public static void main(String[] args) throws IOException {
 		
-        // some example code to get you started
-
-		String url = "https://en.wikipedia.org/wiki/Java_(programming_language)";
-		Elements paragraphs = wf.fetchWikipedia(url);
-		visited.add(url);
-		Element firstPara = paragraphs.get(0);
-
-		Iterable<Node> iter = new WikiNodeIterable(firstPara);
+        // current url to be searched, updated frequently
+		String url = start;
 		
 		//depth first search
-
-		for (Node n: iter) {
-			if (n instanceof Element) {
-				Element node = (Element) n;
-				if(node.tagName().equals("p"))
+		do{
+			//get first good link
+			visited.add(url);
+			Document doc = Jsoup.connect(url).get();
+        	Elements links = doc.select("a[href]");
+			Element valid = null;
+			for(Element e : links){
+				if(!WikiPhilosophy.parentParensOrEm(e) && WikiPhilosophy.isValidLink(e.text()))
 				{
-					if(!WikiPhilosophy.parentParensOrEm(node) && WikiPhilosophy.isValidLink(node.ownText()))
-						visited.add(node.ownText());
-					if(node.ownText().contains("philosophy"))
-						break;
+					valid = e;
+					break;
 				}
 			}
 			
-			if(visited.size() > 15)
-				break;
-
-        }
+			if(valid == null){
+				System.out.println("Dead End!");
+				return;
+			}
+			
+			//update url to search new page
+			url = valid.attr("abs:href");;
+		
+			
+		} while(visited.size() < 15 && !visited.contains(target)); //caps number of links followed and stops when Philosophy reached
 
         // the following throws an exception so the test fails
         // until you update the code
