@@ -35,20 +35,21 @@ public class WikiPhilosophy {
 	public static void main(String[] args) throws IOException {
 		
         // current url to be searched, updated frequently
+		visited.add(start);
 		String url = start;
-		
+
 		//depth first search
-		do{
-			//get first good link
-			visited.add(url);
+		while(visited.size() < 15 && !visited.contains(target)){ //caps number of links followed and stops when Philosophy reached
+			//get first good link in body of page
+			
 			System.out.println(url);
 			Document doc = Jsoup.connect(url).get();
-        	Elements links = doc.select("a[href]");
+        	Elements links = doc.select("p").select("a[href]");
 	
 			Element valid = null;
 			int i = 0;
 			for(Element e : links){
-				if(i >=3 && WikiPhilosophy.isValidLink(e.attr("abs:href"),e.text()) && !WikiPhilosophy.parentParensOrEm(e) )
+				if(WikiPhilosophy.isValidLink(e.attr("abs:href"),e.text()) && !WikiPhilosophy.parentParensOrEm(e) )
 				{
 					valid = e;
 					break;
@@ -63,9 +64,8 @@ public class WikiPhilosophy {
 			
 			//update url to search new page
 			url = valid.attr("abs:href");
-		
-			
-		} while(visited.size() < 15 && !visited.contains(target)); //caps number of links followed and stops when Philosophy reached
+			visited.add(url);
+		} 
 
         // the following throws an exception so the test fails
         // until you update the code
@@ -75,13 +75,13 @@ public class WikiPhilosophy {
 	public static boolean isValidLink(String link,String text){
 		System.out.println("char:" + text);
 		
-		return text.length() > 0 && !visited.contains(link); //&& text.charAt(0) >= 97; //checking for lowercase
+		return text.length() > 0 && !visited.contains(link); 
 	}
 
 	public static boolean parentParensOrEm(Node node){
 		Element p = (Element) node.parent();
 		String tag = p.tagName();
 		System.out.println("tag:" + tag);
-		return tag.equals("em") || tag.equals("b"); //|| node.parent().equals(parens);
+		return tag.equals("em") || tag.equals("b") || node.previousSibling().toString().contains("("); //checks bold, parens,or italics
 	}
 }
