@@ -13,7 +13,7 @@ import org.jsoup.select.Elements;
 public class WikiPhilosophy {
 	
 	final static WikiFetcher wf = new WikiFetcher();
-	
+	final static List<String> visited = new ArrayList<String>();
 	/**
 	 * Tests a conjecture about Wikipedia and Philosophy.
 	 * 
@@ -33,19 +33,43 @@ public class WikiPhilosophy {
 
 		String url = "https://en.wikipedia.org/wiki/Java_(programming_language)";
 		Elements paragraphs = wf.fetchWikipedia(url);
-
+		visited.add(url);
 		Element firstPara = paragraphs.get(0);
-		
+
 		Iterable<Node> iter = new WikiNodeIterable(firstPara);
-		for (Node node: iter) {
-			if (node instanceof TextNode) {
-				System.out.print(node);
+		
+		//depth first search
+
+		for (Node n: iter) {
+			if (n instanceof Element) {
+				Element node = (Element) n;
+				if(node.tagName().equals("p"))
+				{
+					if(!WikiPhilosophy.parentParensOrEm(node) && WikiPhilosophy.isValidLink(node.ownText()))
+						visited.add(node.ownText());
+					if(node.ownText().contains("philosophy"))
+						break;
+				}
 			}
+			
+			if(visited.size() > 15)
+				break;
+
         }
 
         // the following throws an exception so the test fails
         // until you update the code
-        String msg = "Complete this lab by adding your code and removing this statement.";
-        throw new UnsupportedOperationException(msg);
+        System.out.println(visited);
+	}
+	
+	public static boolean isValidLink(String link){
+
+		return !visited.contains(link);
+	}
+
+	public static boolean parentParensOrEm(Node node){
+		Element p = (Element) node.parent();
+		String tag = p.tagName();
+		return tag.equals("em"); //|| node.parent().equals(parens);
 	}
 }
